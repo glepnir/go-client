@@ -103,8 +103,8 @@ func TestAPI(t *testing.T) {
 	t.Run("Context", testContext(v))
 	t.Run("Extmarks", testExtmarks(v))
 	t.Run("Runtime", testRuntime(v))
+	t.Run("Options", testOptions(v))
 	t.Run("AllOptionsInfo", testAllOptionsInfo(v))
-	t.Run("OptionsInfo", testOptionsInfo(v))
 }
 
 func testBufAttach(v *Nvim) func(*testing.T) {
@@ -2233,6 +2233,102 @@ func testRuntime(v *Nvim) func(*testing.T) {
 	}
 }
 
+func testOptions(v *Nvim) func(*testing.T) {
+	return func(t *testing.T) {
+		t.Run("OptionInfo", func(t *testing.T) {
+			tests := map[string]struct {
+				name string
+				want *OptionInfo
+			}{
+				"filetype": {
+					name: "filetype",
+					want: &OptionInfo{
+						Name:          "filetype",
+						ShortName:     "ft",
+						Type:          "string",
+						Default:       "",
+						WasSet:        false,
+						LastSetSid:    0,
+						LastSetLinenr: 0,
+						LastSetChan:   0,
+						Scope:         "buf",
+						GlobalLocal:   false,
+						CommaList:     false,
+						FlagList:      false,
+					},
+				},
+				"cmdheight": {
+					name: "cmdheight",
+					want: &OptionInfo{
+						Name:          "cmdheight",
+						ShortName:     "ch",
+						Type:          "number",
+						Default:       int64(1),
+						WasSet:        false,
+						LastSetSid:    0,
+						LastSetLinenr: 0,
+						LastSetChan:   0,
+						Scope:         "global",
+						GlobalLocal:   false,
+						CommaList:     false,
+						FlagList:      false,
+					},
+				},
+				"hidden": {
+					name: "hidden",
+					want: &OptionInfo{
+						Name:          "hidden",
+						ShortName:     "hid",
+						Type:          "boolean",
+						Default:       false,
+						WasSet:        false,
+						LastSetSid:    0,
+						LastSetLinenr: 0,
+						LastSetChan:   0,
+						Scope:         "global",
+						GlobalLocal:   false,
+						CommaList:     false,
+						FlagList:      false,
+					},
+				},
+			}
+
+			for name, tt := range tests {
+				tt := tt
+				t.Run("Nvim/"+name, func(t *testing.T) {
+					t.Parallel()
+
+					got, err := v.OptionInfo(tt.name)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if !reflect.DeepEqual(tt.want, got) {
+						t.Fatalf("got %#v but want %#v", got, tt.want)
+					}
+				})
+			}
+
+			for name, tt := range tests {
+				tt := tt
+				t.Run("Batch/"+name, func(t *testing.T) {
+					t.Parallel()
+
+					b := v.NewBatch()
+
+					var got OptionInfo
+					b.OptionInfo(tt.name, &got)
+					if err := b.Execute(); err != nil {
+						t.Fatal(err)
+					}
+					if !reflect.DeepEqual(tt.want, &got) {
+						t.Fatalf("got %#v but want %#v", &got, tt.want)
+					}
+				})
+			}
+		})
+	}
+}
+
 func testAllOptionsInfo(v *Nvim) func(*testing.T) {
 	return func(t *testing.T) {
 		want := &OptionInfo{
@@ -2266,100 +2362,6 @@ func testAllOptionsInfo(v *Nvim) func(*testing.T) {
 		}
 		if !reflect.DeepEqual(want, &got2) {
 			t.Fatalf("got %v but want %v", got2, want)
-		}
-	}
-}
-
-func testOptionsInfo(v *Nvim) func(*testing.T) {
-	return func(t *testing.T) {
-		tests := map[string]struct {
-			name string
-			want *OptionInfo
-		}{
-			"filetype": {
-				name: "filetype",
-				want: &OptionInfo{
-					Name:          "filetype",
-					ShortName:     "ft",
-					Type:          "string",
-					Default:       "",
-					WasSet:        false,
-					LastSetSid:    0,
-					LastSetLinenr: 0,
-					LastSetChan:   0,
-					Scope:         "buf",
-					GlobalLocal:   false,
-					CommaList:     false,
-					FlagList:      false,
-				},
-			},
-			"cmdheight": {
-				name: "cmdheight",
-				want: &OptionInfo{
-					Name:          "cmdheight",
-					ShortName:     "ch",
-					Type:          "number",
-					Default:       int64(1),
-					WasSet:        false,
-					LastSetSid:    0,
-					LastSetLinenr: 0,
-					LastSetChan:   0,
-					Scope:         "global",
-					GlobalLocal:   false,
-					CommaList:     false,
-					FlagList:      false,
-				},
-			},
-			"hidden": {
-				name: "hidden",
-				want: &OptionInfo{
-					Name:          "hidden",
-					ShortName:     "hid",
-					Type:          "boolean",
-					Default:       false,
-					WasSet:        false,
-					LastSetSid:    0,
-					LastSetLinenr: 0,
-					LastSetChan:   0,
-					Scope:         "global",
-					GlobalLocal:   false,
-					CommaList:     false,
-					FlagList:      false,
-				},
-			},
-		}
-
-		for name, tt := range tests {
-			tt := tt
-			t.Run("Nvim/"+name, func(t *testing.T) {
-				t.Parallel()
-
-				got, err := v.OptionInfo(tt.name)
-				if err != nil {
-					t.Fatal(err)
-				}
-				if !reflect.DeepEqual(tt.want, got) {
-					t.Fatalf("got %#v but want %#v", got, tt.want)
-				}
-			})
-		}
-
-		for name, tt := range tests {
-			tt := tt
-			t.Run("Batch/"+name, func(t *testing.T) {
-				t.Parallel()
-
-				b := v.NewBatch()
-
-				var got OptionInfo
-				b.OptionInfo(tt.name, &got)
-				if err := b.Execute(); err != nil {
-					t.Fatal(err)
-				}
-				if !reflect.DeepEqual(tt.want, &got) {
-					t.Fatalf("got %#v but want %#v", &got, tt.want)
-				}
-			})
 		}
 	}
 }
