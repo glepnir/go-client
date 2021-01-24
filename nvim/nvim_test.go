@@ -897,136 +897,173 @@ func testVar(v *Nvim) func(*testing.T) {
 func testMessage(v *Nvim) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Run("Nvim", func(t *testing.T) {
-			const wantWriteOut = `hello WriteOut`
-			if err := v.WriteOut(wantWriteOut + "\n"); err != nil {
-				t.Fatalf("failed to WriteOut: %v", err)
-			}
+			t.Run("WriteOut", func(t *testing.T) {
+				defer func() {
+					// cleanup v:statusmsg
+					if err := v.SetVVar("statusmsg", ""); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+					// clear messages
+					if _, err := v.Exec(":messages clear", false); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+				}()
 
-			var gotWriteOut string
-			if err := v.VVar("statusmsg", &gotWriteOut); err != nil {
-				t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
-			}
-			if gotWriteOut != wantWriteOut {
-				t.Fatalf("WriteOut(%q) = %q, want: %q", wantWriteOut, gotWriteOut, wantWriteOut)
-			}
+				const wantWriteOut = `hello WriteOut`
+				if err := v.WriteOut(wantWriteOut + "\n"); err != nil {
+					t.Fatalf("failed to WriteOut: %v", err)
+				}
 
-			// cleanup v:statusmsg
-			if err := v.SetVVar("statusmsg", ""); err != nil {
-				t.Fatalf("failed to SetVVar: %v", err)
-			}
+				var gotWriteOut string
+				if err := v.VVar("statusmsg", &gotWriteOut); err != nil {
+					t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
+				}
+				if gotWriteOut != wantWriteOut {
+					t.Fatalf("WriteOut(%q) = %q, want: %q", wantWriteOut, gotWriteOut, wantWriteOut)
+				}
+			})
 
-			// clear messages
-			if _, err := v.Exec(":messages clear", false); err != nil {
-				t.Fatalf("failed to SetVVar: %v", err)
-			}
+			t.Run("WriteErr", func(t *testing.T) {
+				defer func() {
+					// cleanup v:statusmsg
+					if err := v.SetVVar("statusmsg", ""); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+					// clear messages
+					if _, err := v.Exec(":messages clear", false); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+				}()
 
-			const wantWriteErr = `hello WriteErr`
-			if err := v.WriteErr(wantWriteErr + "\n"); err != nil {
-				t.Fatalf("failed to WriteErr: %v", err)
-			}
+				const wantWriteErr = `hello WriteErr`
+				if err := v.WriteErr(wantWriteErr + "\n"); err != nil {
+					t.Fatalf("failed to WriteErr: %v", err)
+				}
 
-			var gotWriteErr string
-			if err := v.VVar("errmsg", &gotWriteErr); err != nil {
-				t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
-			}
-			if gotWriteErr != wantWriteErr {
-				t.Fatalf("WriteErr(%q) = %q, want: %q", wantWriteErr, gotWriteErr, wantWriteErr)
-			}
+				var gotWriteErr string
+				if err := v.VVar("errmsg", &gotWriteErr); err != nil {
+					t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
+				}
+				if gotWriteErr != wantWriteErr {
+					t.Fatalf("WriteErr(%q) = %q, want: %q", wantWriteErr, gotWriteErr, wantWriteErr)
+				}
+			})
 
-			// cleanup v:statusmsg
-			if err := v.SetVVar("statusmsg", ""); err != nil {
-				t.Fatalf("failed to SetVVar: %v", err)
-			}
+			t.Run("WritelnErr", func(t *testing.T) {
+				defer func() {
+					// cleanup v:statusmsg
+					if err := v.SetVVar("statusmsg", ""); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+					// clear messages
+					if _, err := v.Exec(":messages clear", false); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+				}()
 
-			// clear messages
-			if _, err := v.Exec(":messages clear", false); err != nil {
-				t.Fatalf("failed to SetVVar: %v", err)
-			}
+				const wantWritelnErr = `hello WritelnErr`
+				if err := v.WritelnErr(wantWritelnErr); err != nil {
+					t.Fatalf("failed to WriteErr: %v", err)
+				}
 
-			const wantWritelnErr = `hello WritelnErr`
-			if err := v.WritelnErr(wantWritelnErr); err != nil {
-				t.Fatalf("failed to WriteErr: %v", err)
-			}
-
-			var gotWritelnErr string
-			if err := v.VVar("errmsg", &gotWritelnErr); err != nil {
-				t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
-			}
-			if gotWritelnErr != wantWritelnErr {
-				t.Fatalf("WritelnErr(%q) = %q, want: %q", wantWritelnErr, gotWritelnErr, wantWritelnErr)
-			}
-
-			// cleanup v:statusmsg
-			if err := v.SetVVar("statusmsg", ""); err != nil {
-				t.Fatalf("failed to SetVVar: %v", err)
-			}
-
-			// clear messages
-			if _, err := v.Exec(":messages clear", false); err != nil {
-				t.Fatalf("failed to SetVVar: %v", err)
-			}
+				var gotWritelnErr string
+				if err := v.VVar("errmsg", &gotWritelnErr); err != nil {
+					t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
+				}
+				if gotWritelnErr != wantWritelnErr {
+					t.Fatalf("WritelnErr(%q) = %q, want: %q", wantWritelnErr, gotWritelnErr, wantWritelnErr)
+				}
+			})
 		})
 
 		t.Run("Batch", func(t *testing.T) {
-			b := v.NewBatch()
+			t.Run("WriteOut", func(t *testing.T) {
+				defer func() {
+					// cleanup v:statusmsg
+					if err := v.SetVVar("statusmsg", ""); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+					// clear messages
+					if _, err := v.Exec(":messages clear", false); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+				}()
 
-			const wantWriteOut = `hello WriteOut`
-			b.WriteOut(wantWriteOut + "\n")
-			if err := b.Execute(); err != nil {
-				t.Fatalf("failed to WriteOut: %v", err)
-			}
+				b := v.NewBatch()
 
-			var gotWriteOut string
-			b.VVar("statusmsg", &gotWriteOut)
-			if err := b.Execute(); err != nil {
-				t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
-			}
-			if gotWriteOut != wantWriteOut {
-				t.Fatalf("b.WriteOut(%q) = %q, want: %q", wantWriteOut, gotWriteOut, wantWriteOut)
-			}
+				const wantWriteOut = `hello WriteOut`
+				b.WriteOut(wantWriteOut + "\n")
+				if err := b.Execute(); err != nil {
+					t.Fatalf("failed to WriteOut: %v", err)
+				}
 
-			// cleanup v:statusmsg
-			if err := v.SetVVar("statusmsg", ""); err != nil {
-				t.Fatalf("failed to SetVVar: %v", err)
-			}
+				var gotWriteOut string
+				b.VVar("statusmsg", &gotWriteOut)
+				if err := b.Execute(); err != nil {
+					t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
+				}
+				if gotWriteOut != wantWriteOut {
+					t.Fatalf("b.WriteOut(%q) = %q, want: %q", wantWriteOut, gotWriteOut, wantWriteOut)
+				}
+			})
 
-			const wantWriteErr = `hello WriteErr`
-			b.WriteErr(wantWriteErr + "\n")
-			if err := b.Execute(); err != nil {
-				t.Fatalf("failed to WriteErr: %v", err)
-			}
-			var gotWriteErr string
-			b.VVar("errmsg", &gotWriteErr)
-			if err := b.Execute(); err != nil {
-				t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
-			}
-			if gotWriteErr != wantWriteErr {
-				t.Fatalf("b.WriteErr(%q) = %q, want: %q", wantWriteErr, gotWriteErr, wantWriteErr)
-			}
+			t.Run("WriteErr", func(t *testing.T) {
+				defer func() {
+					// cleanup v:statusmsg
+					if err := v.SetVVar("statusmsg", ""); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+					// clear messages
+					if _, err := v.Exec(":messages clear", false); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+				}()
 
-			// cleanup v:statusmsg
-			if err := v.SetVVar("statusmsg", ""); err != nil {
-				t.Fatalf("failed to SetVVar: %v", err)
-			}
+				b := v.NewBatch()
 
-			const wantWritelnErr = `hello WritelnErr`
-			b.WritelnErr(wantWritelnErr)
-			if err := b.Execute(); err != nil {
-				t.Fatalf("failed to WriteErr: %v", err)
-			}
-			var gotWritelnErr string
-			b.VVar("errmsg", &gotWritelnErr)
-			if err := b.Execute(); err != nil {
-				t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
-			}
-			if gotWritelnErr != wantWritelnErr {
-				t.Fatalf("b.WritelnErr(%q) = %q, want: %q", wantWritelnErr, gotWritelnErr, wantWritelnErr)
-			}
+				const wantWriteErr = `hello WriteErr`
+				b.WriteErr(wantWriteErr + "\n")
+				if err := b.Execute(); err != nil {
+					t.Fatalf("failed to WriteErr: %v", err)
+				}
+				var gotWriteErr string
+				b.VVar("errmsg", &gotWriteErr)
+				if err := b.Execute(); err != nil {
+					t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
+				}
+				if gotWriteErr != wantWriteErr {
+					t.Fatalf("b.WriteErr(%q) = %q, want: %q", wantWriteErr, gotWriteErr, wantWriteErr)
+				}
+			})
 
-			// cleanup v:statusmsg
-			if err := v.SetVVar("statusmsg", ""); err != nil {
-				t.Fatalf("failed to SetVVar: %v", err)
-			}
+			t.Run("WritelnErr", func(t *testing.T) {
+				defer func() {
+					// cleanup v:statusmsg
+					if err := v.SetVVar("statusmsg", ""); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+					// clear messages
+					if _, err := v.Exec(":messages clear", false); err != nil {
+						t.Fatalf("failed to SetVVar: %v", err)
+					}
+				}()
+
+				b := v.NewBatch()
+
+				const wantWritelnErr = `hello WritelnErr`
+				b.WritelnErr(wantWritelnErr)
+				if err := b.Execute(); err != nil {
+					t.Fatalf("failed to WriteErr: %v", err)
+				}
+				var gotWritelnErr string
+				b.VVar("errmsg", &gotWritelnErr)
+				if err := b.Execute(); err != nil {
+					t.Fatalf("could not get v:statusmsg nvim variable: %v", err)
+				}
+				if gotWritelnErr != wantWritelnErr {
+					t.Fatalf("b.WritelnErr(%q) = %q, want: %q", wantWritelnErr, gotWritelnErr, wantWritelnErr)
+				}
+			})
 		})
 	}
 }
