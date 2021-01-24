@@ -1276,8 +1276,20 @@ func testHighlight(v *Nvim) func(*testing.T) {
 			}
 
 			var nsID int
-			if err := v.Eval("hlID('NewHighlight')", &nsID); err != nil {
+			if err := v.Eval(`hlID('NewHighlight')`, &nsID); err != nil {
 				t.Fatal(err)
+			}
+
+			const (
+				HLIDName      = "Error"
+				wantErrorHLID = 137
+			)
+			goHLID, err := v.HLIDByName(HLIDName)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if goHLID != wantErrorHLID {
+				t.Fatalf("HLByID(%s)\n got %+v,\nwant %+v", HLIDName, goHLID, wantErrorHLID)
 			}
 
 			gotCTermHL, err := v.HLByID(nsID, false)
@@ -1285,7 +1297,7 @@ func testHighlight(v *Nvim) func(*testing.T) {
 				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(gotCTermHL, wantCTerm) {
-				t.Errorf("HLByID(id, false)\n got %+v,\nwant %+v", gotCTermHL, wantCTerm)
+				t.Fatalf("HLByID(id, false)\n got %+v,\nwant %+v", gotCTermHL, wantCTerm)
 			}
 
 			gotGUIHL, err := v.HLByID(nsID, true)
@@ -1296,7 +1308,7 @@ func testHighlight(v *Nvim) func(*testing.T) {
 				t.Fatalf("HLByID(id, true)\n got %+v,\nwant %+v", gotGUIHL, wantGUI)
 			}
 
-			errorMsgHL, err := v.HLByName("ErrorMsg", true)
+			errorMsgHL, err := v.HLByName(`ErrorMsg`, true)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1324,7 +1336,7 @@ func testHighlight(v *Nvim) func(*testing.T) {
 				t.Fatal(err)
 			}
 			var nsID2 int
-			if err := v.Eval("hlID('NewHighlight2')", &nsID2); err != nil {
+			if err := v.Eval(`hlID('NewHighlight2')`, &nsID2); err != nil {
 				t.Fatal(err)
 			}
 			if err := v.SetHighlightNameSpace(nsID2); err != nil {
@@ -1371,15 +1383,28 @@ func testHighlight(v *Nvim) func(*testing.T) {
 			}
 			wantGUI := &HLAttrs{
 				Bold:       true,
-				Foreground: cm["Red"],
-				Background: cm["Yellow"],
-				Special:    cm["Blue"],
+				Foreground: cm[`Red`],
+				Background: cm[`Yellow`],
+				Special:    cm[`Blue`],
 			}
 
 			var nsID int
 			b.Eval("hlID('NewHighlight')", &nsID)
 			if err := b.Execute(); err != nil {
 				t.Fatal(err)
+			}
+
+			const (
+				HLIDName      = `Error`
+				wantErrorHLID = 137
+			)
+			var goHLID int
+			b.HLIDByName(HLIDName, &goHLID)
+			if err := b.Execute(); err != nil {
+				t.Fatal(err)
+			}
+			if goHLID != wantErrorHLID {
+				t.Fatalf("HLByID(%s)\n got %+v,\nwant %+v", HLIDName, goHLID, wantErrorHLID)
 			}
 
 			var gotCTermHL HLAttrs
@@ -1401,7 +1426,7 @@ func testHighlight(v *Nvim) func(*testing.T) {
 			}
 
 			var errorMsgHL HLAttrs
-			b.HLByName("ErrorMsg", true, &errorMsgHL)
+			b.HLByName(`ErrorMsg`, true, &errorMsgHL)
 			if err := b.Execute(); err != nil {
 				t.Fatal(err)
 			}
@@ -1409,7 +1434,7 @@ func testHighlight(v *Nvim) func(*testing.T) {
 			errorMsgHL.Bold = true
 			errorMsgHL.Underline = true
 			errorMsgHL.Italic = true
-			b.SetHighlight(nsID, "ErrorMsg", &errorMsgHL)
+			b.SetHighlight(nsID, `ErrorMsg`, &errorMsgHL)
 			if err := b.Execute(); err != nil {
 				t.Fatal(err)
 			}
@@ -1426,7 +1451,7 @@ func testHighlight(v *Nvim) func(*testing.T) {
 				t.Fatalf("SetHighlight:\ngot %#v\nwant %#v", &errorMsgHL, wantErrorMsgEHL)
 			}
 
-			const cmd2 = "hi NewHighlight2 guifg=yellow guibg=red gui=bold"
+			const cmd2 = `hi NewHighlight2 guifg=yellow guibg=red gui=bold`
 			b.Command(cmd2)
 			if err := b.Execute(); err != nil {
 				t.Fatal(err)
